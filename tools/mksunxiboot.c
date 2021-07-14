@@ -20,11 +20,11 @@
 #include <stdint.h>
 #include "sunxi_image.h"
 
- /* check sum functon from sun4i boot code */
-int gen_check_sum(struct boot_file_head* head_p)
+/* check sum functon from sun4i boot code */
+int gen_check_sum(struct boot_file_head *head_p)
 {
   uint32_t length;
-  uint32_t* buf;
+  uint32_t *buf;
   uint32_t loop;
   uint32_t i;
   uint32_t sum;
@@ -32,12 +32,13 @@ int gen_check_sum(struct boot_file_head* head_p)
   length = le32toh(head_p->length);
   if ((length & 0x3) != 0) /* must 4-byte-aligned */
     return -1;
-  buf = (uint32_t*)head_p;
+  buf = (uint32_t *)head_p;
   head_p->check_sum = htole32(BROM_STAMP_VALUE); /* fill stamp */
   loop = length >> 2;
 
   /* calculate the sum */
-  for (i = 0, sum = 0; i < loop; i++) {
+  for (i = 0, sum = 0; i < loop; i++)
+  {
     sum += le32toh(buf[i]);
   }
 
@@ -56,20 +57,21 @@ int gen_check_sum(struct boot_file_head* head_p)
  */
 #define BLOCK_SIZE 0x2000
 
-struct boot_img {
+struct boot_img
+{
   struct boot_file_head header;
   char code[SRAM_LOAD_MAX_SIZE];
   char pad[BLOCK_SIZE];
 };
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
   int fd_in, fd_out;
   struct boot_img img;
   unsigned file_size;
   int count;
-  char* tool_name = argv[0];
-  char* default_dt = NULL;
+  char *tool_name = argv[0];
+  char *default_dt = NULL;
 
   /* a sanity check */
   if ((sizeof(img.header) % 32) != 0)
@@ -147,8 +149,8 @@ int main(int argc, char* argv[])
 
   /* fill the header */
   img.header.b_instruction = /* b instruction */
-    0xEA000000 |           /* jump to the first instr after the header */
-    ((sizeof(struct boot_file_head) / sizeof(int) - 2) & 0x00FFFFFF);
+      0xEA000000 |           /* jump to the first instr after the header */
+      ((sizeof(struct boot_file_head) / sizeof(int) - 2) & 0x00FFFFFF);
   memcpy(img.header.magic, BOOT0_MAGIC, 8); /* no '0' termination */
   img.header.length = ALIGN(file_size + sizeof(struct boot_file_head), BLOCK_SIZE);
   img.header.b_instruction = htole32(img.header.b_instruction);
@@ -161,7 +163,7 @@ int main(int argc, char* argv[])
   {
     if (strlen(default_dt) + 1 <= sizeof(img.header.string_pool))
     {
-      strcpy((char*)img.header.string_pool, default_dt);
+      strcpy((char *)img.header.string_pool, default_dt);
       img.header.dt_name_offset = htole32(offsetof(struct boot_file_head, string_pool));
     }
     else
@@ -171,11 +173,7 @@ int main(int argc, char* argv[])
     }
   }
 
-  if (!gen_check_sum(&img.header)) {
-    printf("bad header,must 4-byte-aligned\n");
-    return EXIT_FAILURE;
-  }
-
+  gen_check_sum(&img.header);
   count = write(fd_out, &img, le32toh(img.header.length));
   if (count != le32toh(img.header.length))
   {
