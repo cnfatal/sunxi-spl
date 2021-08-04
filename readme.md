@@ -1,5 +1,7 @@
 # sunxi-spl
 
+全志H3 MCU，从0开始，手动启动并使能uart0。非uboot，用于研究学习硬件初始化逻辑。
+
 [BROM](https://linux-sunxi.org/BROM)
 
 ## 从 SD 卡启动
